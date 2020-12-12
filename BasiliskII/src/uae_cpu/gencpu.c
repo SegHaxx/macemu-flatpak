@@ -251,20 +251,10 @@ static void genamode (amodes mode, char *reg, wordsizes size, char *name, int ge
 	if (getv == 1)
 	    switch (size) {
 	     case sz_byte:
-#if defined(AMIGA) && !defined(WARPUP)
-		/* sam: I don't know why gcc.2.7.2.1 produces a code worse */
-		/* if it is not done like that: */
-		printf ("\tuae_s8 %s = ((uae_u8*)&m68k_dreg(regs, %s))[3];\n", name, reg);
-#else
 		printf ("\tuae_s8 %s = m68k_dreg(regs, %s);\n", name, reg);
-#endif
 		break;
 	     case sz_word:
-#if defined(AMIGA) && !defined(WARPUP)
-		printf ("\tuae_s16 %s = ((uae_s16*)&m68k_dreg(regs, %s))[1];\n", name, reg);
-#else
 		printf ("\tuae_s16 %s = m68k_dreg(regs, %s);\n", name, reg);
-#endif
 		break;
 	     case sz_long:
 		printf ("\tuae_s32 %s = m68k_dreg(regs, %s);\n", name, reg);

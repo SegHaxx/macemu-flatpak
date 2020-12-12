@@ -34,11 +34,7 @@
 #include "user_strings.h"
 #include "version.h"
 
-#ifdef __BEOS__
-#define ELLIPSIS "\xE2\x80\xA6"
-#else
 #define ELLIPSIS "..."
-#endif
 
 // Common string definitions
 user_string_def common_strings[] = {
