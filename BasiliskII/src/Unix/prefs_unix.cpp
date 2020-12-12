@@ -29,9 +29,6 @@ using std::string;
 
 // Platform-specific preferences items
 prefs_desc platform_prefs_items[] = {
-	{"fbdevicefile", TYPE_STRING, false,   "path of frame buffer device specification file"},
-	{"dsp", TYPE_STRING, false,            "audio output (dsp) device name"},
-	{"mixer", TYPE_STRING, false,          "audio mixer device name"},
 	{"idlewait", TYPE_BOOLEAN, false,      "sleep when idle"},
 #ifdef USE_SDL_VIDEO
 	{"sdlrender", TYPE_STRING, false,      "SDL_Renderer driver (\"auto\", \"software\" (may be faster), etc.)"},
@@ -158,27 +155,11 @@ void SavePrefs(void){
  *  You may also override the defaults set in PrefsInit()
  */
 
-void AddPlatformPrefsDefaults(void)
-{
+void AddPlatformPrefsDefaults(void){
 	PrefsAddBool("keycodes", false);
 	PrefsReplaceString("extfs", "/");
 	PrefsReplaceInt32("mousewheelmode", 1);
 	PrefsReplaceInt32("mousewheellines", 3);
-#ifdef __linux__
-	if (access("/dev/sound/dsp", F_OK) == 0) {
-		PrefsReplaceString("dsp", "/dev/sound/dsp");
-	} else {
-		PrefsReplaceString("dsp", "/dev/dsp");
-	}
-	if (access("/dev/sound/mixer", F_OK) == 0) {
-		PrefsReplaceString("mixer", "/dev/sound/mixer");
-	} else {
-		PrefsReplaceString("mixer", "/dev/mixer");
-	}
-#else
-	PrefsReplaceString("dsp", "/dev/dsp");
-	PrefsReplaceString("mixer", "/dev/mixer");
-#endif
 	PrefsAddBool("idlewait", true);
 #ifdef USE_SDL_VIDEO
 	PrefsReplaceString("sdlrender", "software");
