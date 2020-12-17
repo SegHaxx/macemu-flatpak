@@ -91,13 +91,6 @@ static SDL_mutex *intflag_lock = NULL;				// Mutex to protect InterruptFlags
 uint8 *ScratchMem = NULL;			// Scratch memory for Mac ROM writes
 #endif
 
-#if REAL_ADDRESSING
-static bool lm_area_mapped = false;	// Flag: Low Memory area mmap()ped
-#endif
-
-static HHOOK keyboard_hook; // Hook for intercepting windows key events
-
-
 // Prototypes
 static int xpram_func(void *arg);
 static int tick_func(void *arg);

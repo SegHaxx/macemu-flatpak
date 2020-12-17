@@ -41,12 +41,10 @@ uint32 ROMBaseMac;			// ROM base (Mac address space)
 uint8 *ROMBaseHost;			// ROM base (host address space)
 uint32 ROMSize;				// Size of ROM
 
-#if !REAL_ADDRESSING
 // Mac frame buffer
 uint8 *MacFrameBaseHost;	// Frame buffer base (host address space)
 uint32 MacFrameSize;		// Size of frame buffer
 int MacFrameLayout;			// Frame buffer layout
-#endif
 
 #if DIRECT_ADDRESSING
 uintptr MEMBaseDiff;		// Global offset between a Mac address and its Host equivalent
@@ -68,14 +66,9 @@ extern int quit_program;
  *  Initialize 680x0 emulation, CheckROM() must have been called first
  */
 
-bool Init680x0(void)
-{
+bool Init680x0(void){
 	spcflags_lock = B2_create_mutex();
-#if REAL_ADDRESSING
-	// Mac address space = host address space
-	RAMBaseMac = (uintptr)RAMBaseHost;
-	ROMBaseMac = (uintptr)ROMBaseHost;
-#elif DIRECT_ADDRESSING
+#if DIRECT_ADDRESSING
 	// Mac address space = host address space minus constant offset (MEMBaseDiff)
 	// NOTE: MEMBaseDiff is set up in main_unix.cpp/main()
 	RAMBaseMac = 0;
@@ -129,9 +122,8 @@ void Exit680x0(void)
  *  Initialize memory mapping of frame buffer (called upon video mode change)
  */
 
-void InitFrameBufferMapping(void)
-{
-#if !REAL_ADDRESSING && !DIRECT_ADDRESSING
+void InitFrameBufferMapping(void){
+#if !DIRECT_ADDRESSING
 	memory_init();
 #endif
 }

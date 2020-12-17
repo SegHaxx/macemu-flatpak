@@ -72,15 +72,13 @@ extern uint8 *FakeIOBaseHost;
 # define RAMEnd 0
 #endif
 #endif
-#if !REAL_ADDRESSING
-// If we are not using real addressing, the Mac frame buffer gets mapped to this location
+// The Mac frame buffer gets mapped to this location
 // The memory must be allocated by VideoInit(). If multiple monitors are used, they must
 // share the frame buffer
 const uint32 MacFrameBaseMac = 0xa0000000;
 extern uint8 *MacFrameBaseHost;	// Frame buffer base (host address space)
 extern uint32 MacFrameSize;		// Size of frame buffer
 extern int MacFrameLayout;		// Frame buffer layout (see defines below)
-#endif
 
 #if 0
 // Atari memory access functions

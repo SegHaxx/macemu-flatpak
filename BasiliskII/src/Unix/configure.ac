@@ -50,11 +50,10 @@ dnl Addressing modes.
 AC_ARG_ENABLE(addressing,
 [  --enable-addressing=AM  specify the addressing mode to use [default=fastest]],
 [ case "$enableval" in
-    real) 	ADDRESSING_TEST_ORDER="real";;
     direct)	ADDRESSING_TEST_ORDER="direct";;
     banks)	ADDRESSING_TEST_ORDER="banks";;
     fastest)ADDRESSING_TEST_ORDER="direct banks";;
-    *)		AC_MSG_ERROR([--enable-addressing takes only one of the following values: fastest, real, direct, banks]);;
+    *)		AC_MSG_ERROR([--enable-addressing takes only one of the following values: fastest, direct, banks]);;
   esac
 ],
 [ ADDRESSING_TEST_ORDER="direct banks"
@@ -106,11 +105,6 @@ fi
 AC_ARG_VAR(BII_CROSS_MPROTECT_WORKS, [  Whether mprotect works on the target system [default=guessing no]])
 if [[ "x$BII_CROSS_MPROTECT_WORKS" = "x" ]]; then
 	BII_CROSS_MPROTECT_WORKS="guessing no"
-fi
-
-AC_ARG_VAR(BII_CROSS_MAP_LOW_AREA, [  Whether the target system can map 0x2000 bytes from 0x0000 [default=guessing no]])
-if [[ "x$BII_CROSS_MAP_LOW_AREA" = "x" ]]; then
-	BII_CROSS_MAP_LOW_AREA="guessing no"
 fi
 
 AC_ARG_VAR(BII_CROSS_SIGNAL_NEED_REINSTALL, [  Whether the target system needs signal handlers to be reinstalled [default=guessing yes]])
@@ -170,13 +164,11 @@ DEFINES="$DEFINES -DOS_$OS_TYPE"
 
 dnl Target CPU type.
 HAVE_I386=no
-HAVE_M68K=no
 HAVE_SPARC=no
 HAVE_POWERPC=no
 HAVE_X86_64=no
 case "$target_cpu" in
   i386* | i486* | i586* | i686* | i786* ) HAVE_I386=yes;;
-  m68k* ) HAVE_M68K=yes;;
   sparc* ) HAVE_SPARC=yes;;
   powerpc* ) HAVE_POWERPC=yes;;
   x86_64* | amd64* ) HAVE_X86_64=yes;;
@@ -602,7 +594,6 @@ SCSISRC=../dummy/scsi_dummy.cpp
 AUDIOSRC=../dummy/audio_dummy.cpp
 EXTFSSRC=extfs_unix.cpp
 EXTRASYSSRCS=
-CAN_NATIVE_M68K=no
 case "$target_os" in
 linux*)
   ETHERSRC=ether_unix.cpp
@@ -631,7 +622,6 @@ freebsd*)
   fi
   ;;
 netbsd*)
-  CAN_NATIVE_M68K=yes
   ETHERSRC=ether_unix.cpp
   ;;
 solaris*)
@@ -772,14 +762,6 @@ dnl libvhd overrides
 
 if [[ "x$have_libvhd" = "xyes" ]]; then
   EXTRASYSSRCS="$EXTRASYSSRCS vhd_unix.cpp"
-fi
-
-
-dnl Use 68k CPU natively?
-WANT_NATIVE_M68K=no
-if [[ "x$HAVE_M68K" = "xyes" -a "x$CAN_NATIVE_M68K" = "xyes" ]]; then
-  AC_DEFINE(ENABLE_NATIVE_M68K, 1, [Define if using native 68k mode.])
-  WANT_NATIVE_M68K=yes
 fi
 
 if [[ "x$HAVE_PTHREADS" = "xno" ]]; then
@@ -973,44 +955,6 @@ AC_TRANSLATE_DEFINE(HAVE_MMAP_VM, "$have_mmap_vm",
   [Define if your system has a working mmap()-based memory allocator.])
 
 fi dnl HAVE_MMAP_VM
-
-dnl Check if we can modify the __PAGEZERO segment for use as Low Memory
-AC_CACHE_CHECK([whether __PAGEZERO can be Low Memory area 0x0000-0x2000],
-  ac_cv_pagezero_hack, [
-  ac_cv_pagezero_hack=no 
-  case $target_os:$target_cpu in
-  darwin*:x86_64)
-    ac_cv_pagezero_hack=yes
-    dnl might as well skip the test for mmap-able low memory
-    ac_cv_can_map_lm=no
-    ;;
-  esac
-])
-AC_TRANSLATE_DEFINE(PAGEZERO_HACK, "$ac_cv_pagezero_hack",
-  [Define if the __PAGEZERO Mach-O Low Memory Globals hack works on this system.])
-
-dnl Check if we can mmap 0x2000 bytes from 0x0000
-AC_CACHE_CHECK([whether we can map Low Memory area 0x0000-0x2000],
-  ac_cv_can_map_lm, [
-  AC_LANG_SAVE
-  AC_LANG_CPLUSPLUS
-  AC_TRY_RUN([
-    #include "../CrossPlatform/vm_alloc.cpp"
-    int main(void) { /* returns 0 if we could map the lowmem globals */
-      volatile char * lm = 0;
-      if (vm_init() < 0) exit(1);
-      if (vm_acquire_fixed(0, 0x2000) < 0) exit(1);
-      lm[0] = 'z';
-      if (vm_release((char *)lm, 0x2000) < 0) exit(1);
-      vm_exit(); exit(0);
-    }
-  ], ac_cv_can_map_lm=yes, ac_cv_can_map_lm=no,
-  dnl When cross-compiling, do not assume anything.
-  ac_cv_can_map_lm="$BII_CROSS_MAP_LOW_AREA"
-  )
-  AC_LANG_RESTORE
-  ]
-)
 
 dnl Check signal handlers need to be reinstalled
 AC_CACHE_CHECK([whether signal handlers need to be reinstalled],
@@ -1287,32 +1231,10 @@ AC_TRANSLATE_DEFINE(HAVE_LINKER_SCRIPT, "$ac_cv_linker_script_works",
   [Define if there is a linker script to relocate the executable above 0x70000000.])
 
 dnl Determine the addressing mode to use
-if [[ "x$WANT_NATIVE_M68K" = "xyes" ]]; then
-  ADDRESSING_MODE="real"
-else
   ADDRESSING_MODE=""
   AC_MSG_CHECKING([for the addressing mode to use])
   for am in $ADDRESSING_TEST_ORDER; do
     case $am in
-    real)
-      dnl Requires ability to mmap() Low Memory globals
-      if [[ "x$ac_cv_can_map_lm$ac_cv_pagezero_hack" = "xnono" ]]; then
-        continue
-      fi
-      dnl Requires VOSF screen updates
-      if [[ "x$CAN_VOSF" = "xno" ]]; then
-        continue
-      fi
-      dnl Real addressing will probably work.
-      ADDRESSING_MODE="real"
-      WANT_VOSF=yes dnl we can use VOSF and we need it actually
-      DEFINES="$DEFINES -DREAL_ADDRESSING"
-      if [[ "x$ac_cv_pagezero_hack" = "xyes" ]]; then
-        BLESS=Darwin/lowmem
-        LDFLAGS="$LDFLAGS -pagezero_size 0x2000"
-      fi
-      break
-      ;;
     direct)
       ADDRESSING_MODE="direct"
       DEFINES="$DEFINES -DDIRECT_ADDRESSING"
@@ -1332,7 +1254,6 @@ else
     AC_MSG_WARN([Sorry, no suitable addressing mode in $ADDRESSING_TEST_ORDER])
     ADDRESSING_MODE="memory banks"
   fi
-fi
 
 dnl Banked Memory Addressing mode is not supported by the JIT compiler
 if [[ "x$WANT_JIT" = "xyes" -a "x$ADDRESSING_MODE" = "xmemory banks" ]]; then
@@ -1517,10 +1438,6 @@ elif [[ "x$HAVE_GCC27" = "xyes" -a "x$HAVE_SPARC" = "xyes" -a "x$HAVE_GAS" = "xy
     esac
     ;;
   esac
-elif [[ "x$WANT_NATIVE_M68K" = "xyes" ]]; then
-  dnl Native m68k, no emulation
-  CPUINCLUDES="-I../native_cpu"
-  CPUSRCS="asm_support.s"
 fi
 
 if [[ "$target_cpu" = "arm" -o "$target_cpu" = "aarch64" ]]; then
@@ -1751,14 +1668,12 @@ dnl Check for certain math functions
 AC_CHECK_FUNCS(atanh)
 AC_CHECK_FUNCS(isnan isinf finite isnormal signbit)
 
-dnl UAE CPU sources for all non-m68k-native architectures.
-if [[ "x$WANT_NATIVE_M68K" = "xno" ]]; then
-  CPUINCLUDES="-I$UAE_PATH"
-  CPUSRCS="$UAE_PATH/basilisk_glue.cpp $UAE_PATH/memory.cpp $UAE_PATH/newcpu.cpp $UAE_PATH/readcpu.cpp $FPUSRCS cpustbl.cpp cpudefs.cpp $CPUSRCS $JITSRCS"
-  if [[ "$target_cpu" = "arm" -o "$target_cpu" = "aarch64" ]]; then
-    CPUSRCS="$CPUSRCS cpufunctbl.cpp"
-	DEFINES="$DEFINES -DUPDATE_UAE"
-  fi
+dnl UAE CPU sources for all architectures.
+CPUINCLUDES="-I$UAE_PATH"
+CPUSRCS="$UAE_PATH/basilisk_glue.cpp $UAE_PATH/memory.cpp $UAE_PATH/newcpu.cpp $UAE_PATH/readcpu.cpp $FPUSRCS cpustbl.cpp cpudefs.cpp $CPUSRCS $JITSRCS"
+if [[ "$target_cpu" = "arm" -o "$target_cpu" = "aarch64" ]]; then
+  CPUSRCS="$CPUSRCS cpufunctbl.cpp"
+  DEFINES="$DEFINES -DUPDATE_UAE"
 fi
 
 dnl Or if we have -IPA (MIPSPro compilers)
@@ -1793,7 +1708,6 @@ echo VDE support ............................ : $have_vdeplug
 echo Enable video on SEGV signals ........... : $WANT_VOSF
 echo GTK user interface ..................... : $WANT_GTK
 echo mon debugger support ................... : $WANT_MON
-echo Running m68k code natively ............. : $WANT_NATIVE_M68K
 echo Use JIT compiler ....................... : $WANT_JIT
 echo JIT debug mode ......................... : $WANT_JIT_DEBUG
 echo Floating-Point emulation core .......... : $FPE_CORE
