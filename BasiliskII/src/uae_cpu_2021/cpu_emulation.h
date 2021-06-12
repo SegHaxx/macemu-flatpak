@@ -40,7 +40,7 @@
 #if 0
 extern memptr RAMBase;		// RAM base (Atari address space), does not include Low Mem when != 0
 #else
-extern uint32 RAMBaseMac;		// RAM base (Mac address space), does not include Low Mem when != 0
+extern const uint32 RAMBaseMac;		// RAM base (Mac address space), does not include Low Mem when != 0
 #endif
 extern uint8 *RAMBaseHost;	// RAM base (host address space)
 extern uint32 RAMSize;		// Size of RAM
@@ -51,7 +51,7 @@ extern uint32 ROMBaseMac;		// ROM base (Mac address space)
 #endif
 extern uint8 *ROMBaseHost;	// ROM base (host address space)
 extern uint32 ROMSize;		// Size of ROM
-extern uint32 VRAMSize;			// Size of VRAM
+extern uint32 VRAMSize;		// Size of VRAM
 #if 0
 extern uint32 RealROMSize;	// Real size of ROM
 extern memptr HWBase;		// HW base (Atari address space)
@@ -204,6 +204,8 @@ extern void MacMemExit(void);
 #if 0
 extern bool InitMEM();
 #endif
+extern bool InitMacMem(void);
+extern void MacMemExit(void);
 extern bool Init680x0(void);
 #if 0
 extern void Reset680x0(void);
