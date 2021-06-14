@@ -2899,11 +2899,12 @@ static inline const char *str_on_off(bool b)
 #ifdef UAE
 static
 #endif
-void compiler_init(void)
-{
+void compiler_init(void* buf){
 	static bool initialized = false;
 	if (initialized)
 		return;
+
+	compiled_code=(uint8*)buf;
 
 #ifdef UAE
 #else
@@ -2970,8 +2971,7 @@ void compiler_init(void)
 #ifdef UAE
 static
 #endif
-void compiler_exit(void)
-{
+void compiler_exit(void){
 #ifdef PROFILE_COMPILE_TIME
 	emul_end_time = clock();
 #endif
@@ -2983,18 +2983,6 @@ void compiler_exit(void)
 	jit_log("data_wasted = %ld bytes", data_wasted);
 #endif
 #endif
-
-	// Deallocate translation cache
-	if (compiled_code) {
-		vm_release(compiled_code, cache_size * 1024);
-		compiled_code = 0;
-	}
-
-	// Deallocate popallspace
-	if (popallspace) {
-		vm_release(popallspace, POPALLSPACE_SIZE);
-		popallspace = 0;
-	}
 #endif
 
 #ifdef PROFILE_COMPILE_TIME
@@ -3692,28 +3680,16 @@ uae_u32 get_jitted_size(void)
 	return 0;
 }
 
-static uint8 *do_alloc_code(uint32 size, int depth)
-{
-	UNUSED(depth);
-	uint8 *code = (uint8 *)vm_acquire(size, VM_MAP_DEFAULT | VM_MAP_32BIT);
-	return code == VM_MAP_FAILED ? NULL : code;
-}
-
-static inline uint8 *alloc_code(uint32 size)
-{
-	uint8 *ptr = do_alloc_code(size, 0);
+static inline uint8* alloc_code(uint32 size){
+	uint8* ptr = (uint8 *)vm_acquire(size);
+	ptr == VM_MAP_FAILED ? NULL : ptr;
 	/* allocated code must fit in 32-bit boundaries */
-	assert((uintptr)ptr <= 0xffffffff);
+	assert((size_t)ptr<0xffffffffL);
 	return ptr;
 }
 
-void alloc_cache(void)
-{
-	if (compiled_code) {
-		flush_icache_hard();
-		vm_release(compiled_code, cache_size * 1024);
-		compiled_code = 0;
-	}
+void alloc_cache(void){
+	assert(compiled_code);
 
 #ifdef UAE
 	cache_size = currprefs.cachesize;
@@ -3721,12 +3697,6 @@ void alloc_cache(void)
 	if (cache_size == 0)
 		return;
 
-	while (!compiled_code && cache_size) {
-		if ((compiled_code = alloc_code(cache_size * 1024)) == NULL) {
-			compiled_code = 0;
-			cache_size /= 2;
-		}
-	}
 	vm_protect(compiled_code, cache_size * 1024, VM_PAGE_READ | VM_PAGE_WRITE | VM_PAGE_EXECUTE);
 	
 	if (compiled_code) {
@@ -3979,27 +3949,10 @@ static inline void match_states(blockinfo* bi)
 	}
 }
 
-static inline void create_popalls(void)
-{
+static void create_popalls(void){
 	int i,r;
 
-	if (popallspace == NULL) {
-		if ((popallspace = alloc_code(POPALLSPACE_SIZE)) == NULL) {
-			jit_log("WARNING: Could not allocate popallspace!");
-#ifdef UAE
-			if (currprefs.cachesize > 0)
-#endif
-			{
-				jit_abort("Could not allocate popallspace!");
-			}
-#ifdef UAE
-			/* This is not fatal if JIT is not used. If JIT is
-			 * turned on, it will crash, but it would have crashed
-			 * anyway. */
-			return;
-#endif
-		}
-	}
+	popallspace = compiled_code + cache_size*1024;
 	vm_protect(popallspace, POPALLSPACE_SIZE, VM_PAGE_READ | VM_PAGE_WRITE);
 
 	int stack_space = STACK_OFFSET;
@@ -4487,8 +4440,8 @@ void build_comp(void)
 	jit_log("<JIT compiler> : supposedly %d compileable opcodes!",count);
 
 	/* Initialise state */
-	create_popalls();
 	alloc_cache();
+	create_popalls();
 	reset_lists();
 
 	for (i=0;i<TAGSIZE;i+=2) {

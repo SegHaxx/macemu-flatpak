@@ -164,7 +164,7 @@ union cacheline {
 /* Functions exposed to newcpu, or to what was moved from newcpu.c to
  * compemu_support.c */
 #ifdef WINUAE_ARANYM
-extern void compiler_init(void);
+extern void compiler_init(void*);
 extern void compiler_exit(void);
 extern bool compiler_use_jit(void);
 #endif
