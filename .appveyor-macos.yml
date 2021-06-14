@@ -1,0 +1,30 @@
+image: macOS
+
+environment:
+  SDL_VERSION: 2.0.14
+  matrix:
+    - MACEMU_PROJECT: BasiliskII
+      CONFIGURE_OPTIONS: 
+#   - MACEMU_PROJECT: SheepShaver
+#     CONFIGURE_OPTIONS: 
+
+install:
+  - test -e "SDL2-$SDL_VERSION.dmg" || curl -O http://www.libsdl.org/release/SDL2-$SDL_VERSION.dmg
+  - sudo hdiutil attach SDL2-$SDL_VERSION.dmg
+  - sudo cp -r /Volumes/SDL2/SDL2.framework /Library/Frameworks/
+  - brew update
+  - brew install mpfr
+
+cache:
+  - SDL2-$SDL_VERSION.dmg
+  - /usr/local/Cellar
+
+build_script:
+  - cd $MACEMU_PROJECT/src/MacOSX
+  - xcodebuild -project $MACEMU_PROJECT.xcodeproj -scheme $MACEMU_PROJECT -configuration Release build SYMROOT=. CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= ARCHS=x86_64 ONLY_ACTIVE_ARCH=NO
+  - rm -rf Release/gencpu_output* Release/*.a
+  - hdiutil create ../../../$MACEMU_PROJECT.dmg -ov -volname $MACEMU_PROJECT -fs HFS+ -srcfolder Release/
+
+artifacts:
+  - path: $MACEMU_PROJECT.dmg
+    name: $MACEMU_PROJECT

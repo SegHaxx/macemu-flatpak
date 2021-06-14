@@ -1,0 +1,39 @@
+image: Visual Studio 2019
+
+environment:
+  global:
+    MSYS2_DIR: C:\msys64
+    MSYS2_PLATFORM: MINGW32
+  matrix:
+    - MACEMU_PROJECT: BasiliskII
+      CONFIGURE_OPTIONS: 
+    - MACEMU_PROJECT: SheepShaver
+      CONFIGURE_OPTIONS: 
+
+install:
+  # Update package index
+  - '%MSYS2_DIR%\usr\bin\env %MSYS2_DIR%\usr\bin\bash -lc ''/usr/bin/pacman -Sy --noconfirm'' '
+  # Install packages needed to build macemu
+  # After installing a package with pacman -S, check that it is actually installed with pacman -Qi 
+  # because pacman -S reports success even if the package install failed when some necessary package downloads timed out
+  - '%MSYS2_DIR%\usr\bin\env %MSYS2_DIR%\usr\bin\bash -lc ''/usr/bin/pacman -S --noconfirm mingw-w64-i686-gtk2'' '
+  - '%MSYS2_DIR%\usr\bin\env %MSYS2_DIR%\usr\bin\bash -lc ''/usr/bin/pacman -Qi mingw-w64-i686-gtk2'' '
+  - '%MSYS2_DIR%\usr\bin\env %MSYS2_DIR%\usr\bin\bash -lc ''/usr/bin/pacman -S --noconfirm mingw-w64-i686-SDL2'' '
+  - '%MSYS2_DIR%\usr\bin\env %MSYS2_DIR%\usr\bin\bash -lc ''/usr/bin/pacman -Qi mingw-w64-i686-SDL2'' '
+
+cache:
+  - $(MSYS2_DIR)\var\cache\pacman\pkg  # downloaded MSYS2 pacman packages
+
+build_script:
+  - if %MACEMU_PROJECT%==SheepShaver %MSYS2_DIR%\usr\bin\env MSYSTEM=%MSYS2_PLATFORM% %MSYS2_DIR%\usr\bin\bash -lc 'cd /c/projects/%APPVEYOR_PROJECT_NAME%/%MACEMU_PROJECT%; make links'
+  - '%MSYS2_DIR%\usr\bin\env MSYSTEM=%MSYS2_PLATFORM% %MSYS2_DIR%\usr\bin\bash -lc ''cd /c/projects/%APPVEYOR_PROJECT_NAME%/%MACEMU_PROJECT%/src/Windows; ../Unix/autogen.sh %CONFIGURE_OPTIONS%'' '
+  - '%MSYS2_DIR%\usr\bin\env MSYSTEM=%MSYS2_PLATFORM% %MSYS2_DIR%\usr\bin\bash -lc ''cd /c/projects/%APPVEYOR_PROJECT_NAME%/%MACEMU_PROJECT%/src/Windows; make'' '
+
+after_build:
+  - cd %MACEMU_PROJECT%\src\Windows
+  - 7z a ..\..\..\%MACEMU_PROJECT%.zip %MACEMU_PROJECT%*.exe
+
+artifacts:
+  - path: $(MACEMU_PROJECT)\src\Windows\config.log
+  - path: $(MACEMU_PROJECT).zip
+    name: $(MACEMU_PROJECT)
