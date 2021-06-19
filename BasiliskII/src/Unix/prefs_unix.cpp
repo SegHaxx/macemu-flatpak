@@ -35,6 +35,7 @@ prefs_desc platform_prefs_items[] = {
 	{"idlewait", TYPE_BOOLEAN, false,      "sleep when idle"},
 #ifdef USE_SDL_VIDEO
 	{"sdlrender", TYPE_STRING, false,      "SDL_Renderer driver (\"auto\", \"software\" (may be faster), etc.)"},
+	{"sdl_vsync", TYPE_BOOLEAN, false,     "Make SDL_Renderer vertical sync frames to host (eg. with software renderer)"},
 #endif
 	{NULL, TYPE_END, false, NULL} // End of list
 };
@@ -179,4 +180,8 @@ void AddPlatformPrefsDefaults(void)
 	PrefsReplaceString("mixer", "/dev/mixer");
 #endif
 	PrefsAddBool("idlewait", true);
+#ifdef USE_SDL_VIDEO
+	PrefsReplaceString("sdlrender", "software");
+	PrefsReplaceBool("sdl_vsync", true);
+#endif
 }
