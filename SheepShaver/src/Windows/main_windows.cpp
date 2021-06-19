@@ -175,8 +175,7 @@ int main(int argc, char **argv)
 	RAMBase = 0;
 
 	// Print some info
-	printf(GetString(STR_ABOUT_TEXT1), VERSION_MAJOR, VERSION_MINOR);
-	printf(" %s\n", GetString(STR_ABOUT_TEXT2));
+	printf(GetString(STR_ABOUT_TEXT));
 
 	// Parse command line arguments
 	for (int i=1; i<argc; i++) {
