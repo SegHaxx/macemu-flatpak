@@ -19,11 +19,16 @@ Basilisk II is an Open Source 68k Macintosh emulator. That is, it enables you to
 
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/SegHaxx/flathub/new-pr/screenshots/1.png</image>
+      <image>https://raw.githubusercontent.com/flathub/net.cebix.basilisk/master/screenshots/1.png</image>
     </screenshot>
   </screenshots>
 
   <releases>
+    <release version="1.6.19" date="2021-6-19">
+      <description>
+        <p>Stability fixes. Happy Juneteenth!</p>
+      </description>
+    </release>
     <release version="1.0.0" date="2020-12-11">
       <description>
         <p>First Flathub release.</p>

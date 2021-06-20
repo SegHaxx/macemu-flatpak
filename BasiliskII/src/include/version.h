@@ -21,10 +21,6 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#ifdef PACKAGE_VERSION // from config.h
-#define VERSION_STRING PACKAGE_VERSION
-#else
-#define VERSION_STRING "1.0"
-#endif
+#define VERSION_STRING "1.6.19"
 
 #endif
