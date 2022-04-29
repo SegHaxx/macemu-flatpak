@@ -1234,7 +1234,7 @@ static GList *add_serial_names(void)
 		closedir(d);
 	}
 	if (glist)
-		g_list_sort(glist, gl_str_cmp);
+		glist = g_list_sort(glist, gl_str_cmp);
 	else
 		glist = g_list_append(glist, (void *)GetString(STR_NONE_LAB));
 	return glist;
@@ -1276,7 +1276,7 @@ static GList *add_ether_names(void)
 	glist = g_list_append(glist, s_slirp);
 #endif
 	if (glist)
-		g_list_sort(glist, gl_str_cmp);
+		glist = g_list_sort(glist, gl_str_cmp);
 	else
 		glist = g_list_append(glist, (void *)GetString(STR_NONE_LAB));
 	return glist;
