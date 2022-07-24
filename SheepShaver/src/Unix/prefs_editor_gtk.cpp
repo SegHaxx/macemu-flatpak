@@ -472,6 +472,7 @@ bool PrefsEditor(void)
 	make_button_box(box, 4, buttons);
 
 	// Show window and enter main loop
+	gtk_window_set_position(GTK_WINDOW(win),GTK_WIN_POS_CENTER_ALWAYS);
 	gtk_widget_show(win);
 	gtk_main();
 	return start_clicked;
