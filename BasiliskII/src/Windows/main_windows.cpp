@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include <SDL.h>
 #include <SDL_mutex.h>
@@ -106,6 +107,7 @@ static int xpram_func(void *arg);
 static int tick_func(void *arg);
 static void one_tick(...);
 static LRESULT CALLBACK low_level_keyboard_hook(int nCode, WPARAM wParam, LPARAM lParam);
+HHOOK keyboard_hook;
 
 
 /*
