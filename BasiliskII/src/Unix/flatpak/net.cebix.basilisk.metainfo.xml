@@ -15,6 +15,10 @@ Basilisk II is an Open Source 68k Macintosh emulator. That is, it enables you to
 
   <url type="homepage">https://basilisk.cebix.net/</url>
   <url type="bugtracker">https://github.com/SegHaxx/macemu-flatpak/issues</url>
+  <url type="vcs-browser">https://github.com/SegHaxx/macemu-flatpak</url>
+  <developer id="com.haxxed">
+    <name>Callum Lerwick</name>
+  </developer>
 
   <launchable type="desktop-id">net.cebix.basilisk.desktop</launchable>
 
